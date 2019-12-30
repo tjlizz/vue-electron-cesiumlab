@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 
 /**
  * Set `__static` path to static files in production
@@ -14,7 +14,6 @@ let mainWindow
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
-
 function createWindow () {
   /**
    * Initial window options
@@ -22,7 +21,8 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     height: 563,
     useContentSize: true,
-    width: 1000
+    width: 1000,
+    frame: false
   })
 
   mainWindow.loadURL(winURL)
@@ -39,7 +39,10 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
-
+ipcMain.on('aaa', (event, arg) => {
+  console.log(arg)
+  console.log(event)
+})
 app.on('activate', () => {
   if (mainWindow === null) {
     createWindow()

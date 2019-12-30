@@ -70,6 +70,9 @@ let webConfig = {
             name: 'imgs/[name].[ext]'
           }
         }
+      }, {
+        test: /\.scss$/,
+        use: ['css-loader', 'scss-loader']
       },
       {
         test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
