@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, BrowserWindow, ipcMain } from 'electron'
+import {app, BrowserWindow, ipcMain} from 'electron'
 
 /**
  * Set `__static` path to static files in production
@@ -11,9 +11,21 @@ if (process.env.NODE_ENV !== 'development') {
 }
 
 let mainWindow
+
+function addWindow (code, win) {
+  if (!mainWindow[code]) {
+    mainWindow[code] = win
+  }
+}
+
+function getWindow (code) {
+  return mainWindow[code]
+}
+
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
+
 function createWindow () {
   /**
    * Initial window options
@@ -30,8 +42,11 @@ function createWindow () {
   mainWindow.on('closed', () => {
     mainWindow = null
   })
+
+  addWindow('main', mainWindow)
 }
 
+let windows = {}
 app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
@@ -39,9 +54,26 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
-ipcMain.on('aaa', (event, arg) => {
-  console.log(arg)
-  console.log(event)
+ipcMain.on('changeWindow', (event, arg) => {
+  let currentWin = getWindow(arg.winCode)
+  switch (arg.type) {
+    case 'setting':
+      currentWin.openDevTools()
+      break
+    case 'min':
+      currentWin.minimize()
+      break
+    case 'max':
+      if (!currentWin.isMaximized()) {
+        currentWin.maximize()
+      } else {
+        currentWin.unmaximize()
+      }
+      break
+    case 'close':
+      currentWin.close()
+      break
+  }
 })
 app.on('activate', () => {
   if (mainWindow === null) {

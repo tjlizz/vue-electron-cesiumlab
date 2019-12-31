@@ -5,8 +5,10 @@
 </template>
 
 <script>
+
   export default {
-    name: 'vue-electron-cesiumlab'
+    name: 'vue-electron-cesiumlab',
+
   }
 </script>
 
@@ -25,6 +27,10 @@
         -webkit-app-region: no-drag;
     }
 
+    body {
+        overflow: hidden;
+        background: #060606;
+    }
 
     .icon {
         width: 1em;

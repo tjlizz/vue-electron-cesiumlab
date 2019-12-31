@@ -1,16 +1,19 @@
 'use strict'
 
 process.env.BABEL_ENV = 'renderer'
+const cesiumSource = '../node_modules/cesium/Source'
+const cesiumSource2 = './node_modules/cesium/Source'
+const cesiumWorkers = '../Build/Cesium/Workers'
 
 const path = require('path')
-const { dependencies } = require('../package.json')
+const {dependencies} = require('../package.json')
 const webpack = require('webpack')
 
-const MinifyPlugin = require("babel-minify-webpack-plugin")
+const MinifyPlugin = require('babel-minify-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const { VueLoaderPlugin } = require('vue-loader')
+const {VueLoaderPlugin} = require('vue-loader')
 
 /**
  * List of node_modules to include in webpack bundle
@@ -31,17 +34,6 @@ let rendererConfig = {
   ],
   module: {
     rules: [
-      {
-        test: /\.(js|vue)$/,
-        enforce: 'pre',
-        exclude: /node_modules/,
-        use: {
-          loader: 'eslint-loader',
-          options: {
-            formatter: require('eslint-friendly-formatter')
-          }
-        }
-      },
       {
         test: /\.less$/,
         use: ['vue-style-loader', 'css-loader', 'less-loader']
@@ -109,7 +101,8 @@ let rendererConfig = {
   },
   node: {
     __dirname: process.env.NODE_ENV !== 'production',
-    __filename: process.env.NODE_ENV !== 'production'
+    __filename: process.env.NODE_ENV !== 'production',
+    fs: 'empty'
   },
   plugins: [
     new VueLoaderPlugin(),
@@ -117,7 +110,7 @@ let rendererConfig = {
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: path.resolve(__dirname, '../src/index.ejs'),
-      templateParameters(compilation, assets, options) {
+      templateParameters (compilation, assets, options) {
         return {
           compilation: compilation,
           webpack: compilation.getStats().toJson(),
@@ -127,7 +120,7 @@ let rendererConfig = {
             options: options
           },
           process,
-        };
+        }
       },
       minify: {
         collapseWhitespace: true,
@@ -144,12 +137,18 @@ let rendererConfig = {
   output: {
     filename: '[name].js',
     libraryTarget: 'commonjs2',
-    path: path.join(__dirname, '../dist/electron')
+    path: path.join(__dirname, '../dist/electron'),
+    sourcePrefix: ''
+  }, amd: {
+    //允许Cesium兼容 webpack的require方式
+
   },
+
   resolve: {
     alias: {
       '@': path.join(__dirname, '../src/renderer'),
-      'vue$': 'vue/dist/vue.esm.js'
+      'vue$': 'vue/dist/vue.esm.js',
+      cesium: path.resolve(__dirname, cesiumSource)
     },
     extensions: ['.js', '.vue', '.json', '.css', '.node']
   },
@@ -163,6 +162,13 @@ if (process.env.NODE_ENV !== 'production') {
   rendererConfig.plugins.push(
     new webpack.DefinePlugin({
       '__static': `"${path.join(__dirname, '../static').replace(/\\/g, '\\\\')}"`
+    }),
+    new CopyWebpackPlugin([{from: path.join(cesiumSource2, cesiumWorkers), to: 'Workers'}]),
+    new CopyWebpackPlugin([{from: path.join(cesiumSource2, 'Assets'), to: 'Assets'}]),
+    new CopyWebpackPlugin([{from: path.join(cesiumSource2, 'Widgets'), to: 'Widgets'}]),
+    new webpack.DefinePlugin({
+      //Cesium载入静态的资源的相对路径
+      CESIUM_BASE_URL: JSON.stringify('')
     })
   )
 }
@@ -172,6 +178,10 @@ if (process.env.NODE_ENV !== 'production') {
  */
 if (process.env.NODE_ENV === 'production') {
   rendererConfig.devtool = ''
+  new webpack.DefinePlugin({
+    //Cesium载入静态的资源的相对路径
+    CESIUM_BASE_URL: JSON.stringify('./')
+  })
 
   rendererConfig.plugins.push(
     new MinifyPlugin(),

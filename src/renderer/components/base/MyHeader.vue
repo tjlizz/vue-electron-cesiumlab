@@ -25,7 +25,7 @@
     methods: {
       changeWindow: function (type) {
         console.log(type)
-        this.$electron.ipcRenderer.send('aaa', type)
+        this.$electron.ipcRenderer.send('changeWindow', {winCode: 'main', type: type})
       }
     },
     mounted () {
